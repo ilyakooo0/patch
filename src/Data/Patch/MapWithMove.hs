@@ -17,7 +17,6 @@ module Data.Patch.MapWithMove where
 import Data.Patch.Class
 
 import Control.Arrow
-import Control.Lens hiding (from, to)
 import Control.Monad.Trans.State
 import Data.Foldable
 import Data.Function
@@ -31,6 +30,15 @@ import Data.Semigroup (Semigroup (..))
 import qualified Data.Set as Set
 import Data.These (These(..))
 import Data.Tuple
+import Data.Functor.WithIndex
+import Data.Foldable.WithIndex
+import Data.Traversable.WithIndex
+
+#ifdef lens
+
+import Control.Lens hiding (from, to)
+
+#endif
 
 -- | Patch a Map with additions, deletions, and moves.  Invariant: If key @k1@
 -- is coming from @From_Move k2@, then key @k2@ should be going to @Just k1@,
@@ -66,13 +74,10 @@ data From k v
 -- that means it will be deleted.
 type To = Maybe
 
-makeWrapped ''PatchMapWithMove
-
 instance FunctorWithIndex k (PatchMapWithMove k)
 instance FoldableWithIndex k (PatchMapWithMove k)
 instance TraversableWithIndex k (PatchMapWithMove k) where
-  itraverse = itraversed . Indexed
-  itraversed = _Wrapped .> itraversed <. traversed
+  itraverse f (PatchMapWithMove x) = PatchMapWithMove <$> itraverse (traverse . f) x
 
 -- | Create a 'PatchMapWithMove', validating it
 patchMapWithMove :: Ord k => Map k (NodeInfo k v) -> Maybe (PatchMapWithMove k v)
@@ -287,3 +292,9 @@ instance Ord k => Semigroup (PatchMapWithMove k v) where
 instance Ord k => Monoid (PatchMapWithMove k v) where
   mempty = PatchMapWithMove mempty
   mappend = (<>)
+
+#ifdef lens
+
+makeWrapped ''PatchMapWithMove
+
+#endif

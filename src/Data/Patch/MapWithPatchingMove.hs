@@ -18,7 +18,6 @@ module Data.Patch.MapWithPatchingMove where
 import Data.Patch.Class
 
 import Control.Arrow
-import Control.Lens.TH (makeWrapped)
 import Control.Monad.Trans.State
 import Data.Foldable
 import Data.Function
@@ -33,6 +32,12 @@ import Data.Monoid.DecidablyEmpty
 import qualified Data.Set as Set
 import Data.These (These (..))
 import Data.Tuple
+
+#ifdef lens
+
+import Control.Lens.TH (makeWrapped)
+
+#endif
 
 -- | Patch a Map with additions, deletions, and moves.  Invariant: If key @k1@
 -- is coming from @From_Move k2@, then key @k2@ should be going to @Just k1@,
@@ -377,4 +382,8 @@ instance ( Ord k
   mempty = PatchMapWithPatchingMove mempty
   mappend = (<>)
 
+#ifdef lens
+
 makeWrapped ''PatchMapWithPatchingMove
+
+#endif
